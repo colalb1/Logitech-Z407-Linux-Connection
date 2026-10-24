@@ -1,0 +1,14 @@
+[Unit]
+Description=Keep the Logi Z407 speakers connected over Bluetooth
+After=wireplumber.service pipewire-pulse.service
+Wants=wireplumber.service
+
+[Service]
+Type=exec
+EnvironmentFile=%h/.config/z407-connect/env
+ExecStart=%h/.local/bin/z407-connect
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
