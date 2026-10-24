@@ -17,25 +17,16 @@ On Linux the Z407 speakers do not reliably reconnect on its own. After boot, a s
 
 ## Run
 
-Requires `bluez` (`bluetoothctl`), PipeWire with WirePlumber (`pw-cli`, `wpctl`), and `gdbus` (GLib).
-
-The speakers must already be paired. Find their address with `bluetoothctl devices`.
-
-Manually:
+Pair the speakers once (`bluetoothctl`: `scan on`, `pair`, `trust`), then:
 
 ```sh
-Z407_MAC=AA:BB:CC:DD:EE:FF ./z407-connect
+./install.sh [AA:BB:CC:DD:EE:FF]
 ```
 
-As a user systemd service:
+This installs missing dependencies (`apt`, `dnf`, or `pacman`; needs `sudo`), enables `bluetooth.service`, installs the script and a user systemd unit, and starts it. The address defaults to the one paired device named "Z407". It is stored in `~/.config/z407-connect/env`. Re-running is safe.
 
-```sh
-install -Dm755 z407-connect ~/.local/bin/z407-connect
-install -Dm644 z407-connect.service ~/.config/systemd/user/z407-connect.service
+From then on the unit starts at every login, after WirePlumber, and restarts the script 10s after it exits.
 
-# set Z407_MAC in the unit to your speakers' address
-systemctl --user daemon-reload
-systemctl --user enable --now z407-connect.service
-```
+Dependencies: [BlueZ](https://github.com/bluez/bluez) (`bluetoothctl`), [PipeWire](https://pipewire.org/) (`pw-cli`) with [WirePlumber](https://pipewire.pages.freedesktop.org/wireplumber/) (`wpctl`), and [GLib](https://docs.gtk.org/gio/) (`gdbus`).
 
-The unit starts after WirePlumber and restarts the script 10 s after it exits.
+To run without the service: `Z407_MAC=AA:BB:CC:DD:EE:FF ./z407-connect`.

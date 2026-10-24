@@ -5,7 +5,7 @@ Wants=wireplumber.service
 
 [Service]
 Type=exec
-Environment=Z407_MAC=AA:BB:CC:DD:EE:FF
+EnvironmentFile=%h/.config/z407-connect/env
 ExecStart=%h/.local/bin/z407-connect
 Restart=always
 RestartSec=10
