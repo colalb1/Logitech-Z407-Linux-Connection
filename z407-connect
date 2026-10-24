@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# Connects to the Logi Z407 over Bluetooth and makes it the default audio
+# output, then does so again whenever the Bluetooth daemon restarts.
+#
+# Usage: Z407_MAC=AA:BB:CC:DD:EE:FF z407-connect
+set -uo pipefail
+
+readonly MAC=${Z407_MAC:?set Z407_MAC to the speakers\' Bluetooth address}
+readonly NODE_PREFIX="bluez_output.${MAC^^}"
+readonly ATTEMPTS=12
+readonly DELAY_SECONDS=5
+
+is_connected() {
+  bluetoothctl info "$MAC" | grep -q 'Connected: yes'
+}
+
+# PipeWire names the node after the address with underscores, not colons.
+sink_id() {
+  pw-cli ls Node | awk -v prefix="node.name = \"${NODE_PREFIX//:/_}" '
+    /^[[:space:]]*id [0-9]+,/ { id = $2; sub(",", "", id) }
+    index($0, prefix) { print id; exit }'
+}
+
+# Retries cover both WirePlumber not having registered its Bluetooth audio
+# endpoints yet and the speakers still powering up.
+connect_speakers() {
+  local attempt id
+
+  for ((attempt = 1; attempt <= ATTEMPTS; attempt++)); do
+    is_connected || timeout 20 bluetoothctl connect "$MAC" >/dev/null 2>&1
+
+    id=$(sink_id)
+
+    if [[ -n $id ]]; then
+      wpctl set-default "$id"
+      echo "Logi Z407 connected and set as default output (attempt $attempt)."
+      return 0
+    fi
+
+    sleep "$DELAY_SECONDS"
+  done
+
+  echo "Could not connect to Logi Z407 ($MAC) after $ATTEMPTS attempts." >&2
+  return 1
+}
+
+connect_speakers
+
+# bluetoothd drops every connection when it restarts (a bluez package upgrade
+# does this) and does not restore them, so reconnect each time it reappears.
+gdbus monitor --system --dest org.freedesktop.DBus --object-path /org/freedesktop/DBus |
+  while IFS= read -r line; do
+    # stdin is redirected so bluetoothctl cannot swallow pending monitor lines.
+    [[ $line == *"NameOwnerChanged ('org.bluez', '', '"* ]] && connect_speakers </dev/null
+  done
