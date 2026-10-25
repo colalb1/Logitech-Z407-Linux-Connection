@@ -4,7 +4,7 @@ Keeps Logi Z407 Bluetooth speakers connected on Linux and set as the default aud
 
 ## Problem
 
-On Linux the Z407 speakers do not reliably reconnect on its own. After boot, a speaker power-cycle, or a `bluetoothd` restart (e.g. a bluez package upgrade drops every connection and does not restore them), the speakers stay disconnected, or connect without becoming the default sink.
+On Linux the Z407 speakers do not reliably reconnect on their own. After boot, a speaker power cycle, or a `bluetoothd` restart (e.g., a bluez package upgrade drops every connection and does not restore them), the speakers stay disconnected or connect without becoming the default sink.
 
 ## What this does
 
